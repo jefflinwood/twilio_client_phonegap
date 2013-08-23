@@ -12,7 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.R;
+//import android.R;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -21,9 +21,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
 
 import com.twilio.client.Connection;
 import com.twilio.client.ConnectionListener;
@@ -54,6 +56,7 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 	private JSONArray mInitDeviceSetupArgs;
 	private int mCurrentNotificationId = 1;
 	private String mCurrentNotificationText;
+	private TCPlugin plugin = this;
 
 	
 
@@ -62,38 +65,13 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 		public void onReceive(Context context, Intent intent) {
 			// mDevice = intent.getParcelableExtra(Device.EXTRA_DEVICE);
 			mConnection = intent.getParcelableExtra(Device.EXTRA_CONNECTION);
-			Log.d(TAG, "incoming intent received with connection: "
-					+ mConnection.getState().name());
+			mConnection.setConnectionListener(plugin);
+			Log.d(TAG, "incoming intent received with connection: "+ mConnection.getState().name());
 			JSONObject connection = new JSONObject();
-			try {
-				connection.putOpt("parameters", getJSONObject(mConnection.getParameters()));
-				
-				if (mCurrentNotificationText != null) {
-
-
-			        PackageManager pm = context.getPackageManager();
-			        Intent notificationIntent = pm.getLaunchIntentForPackage(context.getPackageName());
-			        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			        
-				    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
-
-					NotificationCompat.Builder mBuilder =
-						    new NotificationCompat.Builder(context)
-						    .setSmallIcon(R.drawable.btn_star_big_on)
-						    .setContentTitle("Answer")
-						    .setContentText(mCurrentNotificationText)
-						    .setContentIntent(pendingIntent);
-					// Gets an instance of the NotificationManager service
-					NotificationManager mNotifyMgr = 
-					        (NotificationManager) TCPlugin.this.webView.getContext().getSystemService(Activity.NOTIFICATION_SERVICE);
-					// Builds the notification and issues it.
-					mNotifyMgr.notify(mCurrentNotificationId, mBuilder.build());
-				}
-				
-			} catch (JSONException e) {
-				Log.e(TAG,e.getLocalizedMessage(), e);
+			String constate = mConnection.getState().name();
+			if(constate.equals("PENDING")) {
+				TCPlugin.this.javascriptCallback("onincoming", connection, mInitCallbackContext);				
 			}
-			TCPlugin.this.javascriptCallback("onincoming", connection, mInitCallbackContext);
 		}
 	};
 
@@ -153,12 +131,16 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 			connectionStatus(callbackContext);
 			return true;
 		} else if ("rejectConnection".equals(action)) {
+			rejectConnection(args, callbackContext);
 			return true;
 		} else if ("showNotification".equals(action)) {
 			showNotification(args,callbackContext);
 			return true;
 		} else if ("cancelNotification".equals(action)) {
 			cancelNotification(args,callbackContext);
+			return true;
+		} else if ("setSpeaker".equals(action)) {
+			setSpeaker(args,callbackContext);
 			return true;
 		}
 
@@ -188,21 +170,13 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 		}
 		mDevice = Twilio.createDevice(arguments.optString(0), this);
 
-		// handle incoming phone requests
-		// 1) configure Twilio
-		Intent intent = new Intent(this.cordova.getActivity(),
-				IncomingConnectionActivity.class);
-		PendingIntent pendingIntent = PendingIntent.getActivity(
-				this.cordova.getActivity(), 0, intent,
-				PendingIntent.FLAG_UPDATE_CURRENT);
+		Intent intent = new Intent(this.cordova.getActivity(), IncomingConnectionActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this.cordova.getActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		mDevice.setIncomingIntent(pendingIntent);
-		// 2) configure the local broadcast manager
-		LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(cordova
-				.getActivity());
-		lbm.registerReceiver(mBroadcastReceiver, new IntentFilter(
-				IncomingConnectionActivity.ACTION_NAME));
+		
+		LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(cordova.getActivity());
+		lbm.registerReceiver(mBroadcastReceiver, new IntentFilter(IncomingConnectionActivity.ACTION_NAME));
 		javascriptCallback("onready", callbackContext);
-
 	}
 
 	private void connect(JSONArray arguments, CallbackContext callbackContext) {
@@ -250,6 +224,11 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 	
 	private void acceptConnection(JSONArray arguments, CallbackContext callbackContext) {
 		mConnection.accept();
+		callbackContext.success(); 
+	}
+	
+	private void rejectConnection(JSONArray arguments, CallbackContext callbackContext) {
+		mConnection.reject();
 		callbackContext.success(); 
 	}
 	
@@ -336,10 +315,28 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 
 	
 	private void showNotification(JSONArray arguments, CallbackContext context) {
+		Context acontext = TCPlugin.this.webView.getContext();
 		NotificationManager mNotifyMgr = 
-		        (NotificationManager) TCPlugin.this.webView.getContext().getSystemService(Activity.NOTIFICATION_SERVICE);
+		        (NotificationManager) acontext.getSystemService(Activity.NOTIFICATION_SERVICE);
 		mNotifyMgr.cancelAll();
-		mCurrentNotificationText = arguments.optString(0);
+		mCurrentNotificationText = arguments.optString(0);		
+		
+		
+		PackageManager pm = acontext.getPackageManager();
+        Intent notificationIntent = pm.getLaunchIntentForPackage(acontext.getPackageName());
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        notificationIntent.putExtra("notificationTag", "BVNotification");
+        
+	    PendingIntent pendingIntent = PendingIntent.getActivity(acontext, 0, notificationIntent, 0);  
+	    int notification_icon = acontext.getResources().getIdentifier("notification", "drawable", acontext.getPackageName());
+		NotificationCompat.Builder mBuilder =
+			    new NotificationCompat.Builder(acontext)
+				.setSmallIcon(notification_icon)
+			    .setContentTitle("Incoming Call")
+			    .setContentText(mCurrentNotificationText)
+			    .setContentIntent(pendingIntent);
+		mNotifyMgr.notify(mCurrentNotificationId, mBuilder.build());
+		
 		context.success();
 	}
 	
@@ -348,6 +345,28 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 		        (NotificationManager) TCPlugin.this.webView.getContext().getSystemService(Activity.NOTIFICATION_SERVICE);
 		mNotifyMgr.cancel(mCurrentNotificationId);
 		context.success();
+	}
+	
+	/**
+	 * 	Changes sound from earpiece to speaker and back
+	 * 
+	 * 	@param mode	Speaker Mode
+	 * */
+	public void setSpeaker(JSONArray arguments, final CallbackContext callbackContext) {
+		Context context = cordova.getActivity().getApplicationContext();
+		AudioManager m_amAudioManager;
+        m_amAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        String mode = arguments.optString(0);
+        if(mode.equals("on")) {
+        	Log.d("TCPlugin", "SPEAKER");
+        	m_amAudioManager.setMode(AudioManager.MODE_NORMAL);
+        	m_amAudioManager.setSpeakerphoneOn(true);        	
+        }
+        else {
+        	Log.d("TCPlugin", "EARPIECE");
+        	m_amAudioManager.setMode(AudioManager.MODE_IN_CALL); 
+        	m_amAudioManager.setSpeakerphoneOn(false);
+        }
 	}
 	
 	// DeviceListener methods
@@ -371,20 +390,20 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 	@Override
 	public void onStartListening(Device device) {
 		// What to do here? The JS library doesn't have an event for this.
-
+		
 	}
 
 	@Override
 	public void onStopListening(Device device) {
 		// TODO Auto-generated method stub
-
+		Log.d(TAG, "onStopListening");
 	}
 
 	@Override
 	public void onStopListening(Device device, int errorCode,
 			String errorMessage) {
 		// this.javascriptErrorback(errorCode, errorMessage);
-
+		Log.d(TAG, "onStopListeningWithError");
 	}
 
 	@Override
@@ -407,7 +426,7 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 
 	// Twilio Connection Listener methods
 	@Override
-	public void onConnected(Connection connection) {
+	public void onConnected(Connection connection) { 
 		Log.d(TAG, "onConnected()");
 		fireDocumentEvent("onconnect");
 		if (connection.isIncoming()) {
@@ -433,8 +452,7 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 	}
 
 	@Override
-	public void onDisconnected(Connection connection, int errorCode,
-			String errorMessage) {
+	public void onDisconnected(Connection connection, int errorCode, String errorMessage) {
 		// TODO: Pass error back
 		Log.d(TAG, "onDisconnected(): " + errorMessage);
 		onDisconnected(connection);
@@ -466,8 +484,8 @@ public class TCPlugin extends CordovaPlugin implements DeviceListener,
 		javascriptCallback(event, null, callbackContext);
 	}
 
-	private void javascriptErrorback(int errorCode, String errorMessage,
-			CallbackContext callbackContext) {
+	
+	private void javascriptErrorback(int errorCode, String errorMessage, CallbackContext callbackContext) {
 		JSONObject object = new JSONObject();
 		try {
 			object.putOpt("message", errorMessage);

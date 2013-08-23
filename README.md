@@ -33,6 +33,7 @@ These are Phonegap plugins that expose the same JS API as Twilio Client for web 
     </application>
 ```
 - Add tcPlugin.js to your application's www folder (in the assets directory)
+- You need to add a notification.png file to your applications res/drawable-ldpi, res/drawable-mdpi & res/drawable-hdpi or res/drawable-xhdpi directories (depending on what resolutions you want to support).
 - Copy the two plugin .java files into your application's src folder, keeping the com/phonegap/plugins/twilioclient directory structure
 - Last, add the plugin to config.xml (in res/xml)
 
@@ -40,6 +41,24 @@ These are Phonegap plugins that expose the same JS API as Twilio Client for web 
     <feature name="TCPlugin">
       <param name="android-package" value="com.phonegap.plugins.twilioclient.TCPlugin"/>
     </feature>
+```
+
+## Additional Features
+
+In addition to the standard features of the Twilio Client JS Library, you can also use the included showNotification and cancelNotification functions to display a UILocalNotifcation to the user when during an incoming call while the app is running in the background:
+
+```javascript
+Twilio.Connection.showNotification("Notification Text", "notification_sound.wav");
+```
+
+```javascript
+Twilio.Connection.cancelNotification();
+```
+
+You can also turn the device's speaker phone on or off during a call using the following method:
+
+```javascript
+Twilio.Connection.setSpeaker("on");
 ```
 
 ## Limitations

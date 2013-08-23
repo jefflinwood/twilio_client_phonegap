@@ -1,6 +1,6 @@
 //
 //  TCPlugin.h
-//  Twilio Client plugin for PhoneGap
+//  Twilio Client plugin for PhoneGap / Cordova
 //
 //  Copyright 2012 Stevie Graham.
 //
@@ -16,6 +16,7 @@
 @property(nonatomic, strong) TCDevice     *device;
 @property(nonatomic, strong) NSString     *callback;
 @property(atomic, strong)    TCConnection *connection;
+@property(atomic, strong)    UILocalNotification *ringNotification;
 
 -(void)javascriptCallback:(NSString *)event;
 -(void)javascriptCallback:(NSString *)event withArguments:(NSDictionary *)arguments;
@@ -28,6 +29,7 @@
 @synthesize device     = _device;
 @synthesize callback   = _callback;
 @synthesize connection = _connection;
+@synthesize ringNotification = _ringNotification;
 
 # pragma mark device delegate method
 
@@ -36,6 +38,7 @@
 }
 
 -(void)device:(TCDevice *)device didReceiveIncomingConnection:(TCConnection *)connection {
+    self.connection = connection;    
     [self javascriptCallback:@"onincoming"];
 }
 
@@ -79,9 +82,9 @@
     self.device = [[TCDevice alloc] initWithCapabilityToken:[arguments pop] delegate:self];
     
     // Disable sounds. was getting EXC_BAD_ACCESS
-    self.device.incomingSoundEnabled   = NO;
-    self.device.outgoingSoundEnabled   = NO;
-    self.device.disconnectSoundEnabled = NO;
+    //self.device.incomingSoundEnabled   = NO;
+    //self.device.outgoingSoundEnabled   = NO;
+    //self.device.disconnectSoundEnabled = NO;
     
     [self javascriptCallback:@"onready"];
 }
@@ -128,6 +131,10 @@
     [self.connection disconnect];
 }
 
+-(void)rejectConnection:(NSArray *)arguments withDict:(NSMutableDictionary *)options {
+    [self.connection reject];
+}
+
 -(void)muteConnection:(NSArray *)arguments withDict:(NSMutableDictionary *)options {
     if(self.connection.isMuted) {
         self.connection.muted = NO;
@@ -136,8 +143,8 @@
     }
 }
 
--(void)sendDigits:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
-    [self.connection sendDigits:[arguments pop]];
+-(void)sendDigits:(CDVInvokedUrlCommand*)command {
+    [self.connection sendDigits:[command.arguments objectAtIndex:0]];
 }
 
 -(void)connectionStatus:(NSMutableArray *)arguments withDict:(NSMutableDictionary *)options {
@@ -164,6 +171,55 @@
         
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:state];    
     [self performSelectorOnMainThread:@selector(writeJavascript:) withObject:[result toSuccessCallbackString:[arguments pop]] waitUntilDone:NO];
+}
+
+
+-(void)showNotification:(CDVInvokedUrlCommand*)command {
+    @try {
+        [[UIApplication sharedApplication] cancelAllLocalNotifications];
+    }
+    @catch(NSException *exception) {
+        NSLog(@"Couldn't Cancel Notification");
+    }
+    
+    NSString *alertBody = [command.arguments objectAtIndex:0];
+    
+    NSString *ringSound = @"incoming.wav";
+    if([command.arguments count] == 2) {
+        ringSound = [command.arguments objectAtIndex:1];
+    }
+
+    _ringNotification = [[UILocalNotification alloc] init];
+    _ringNotification.alertBody = alertBody;
+    _ringNotification.alertAction = @"Answer";
+    _ringNotification.soundName = ringSound;
+    _ringNotification.fireDate = [NSDate date];
+    [[UIApplication sharedApplication] scheduleLocalNotification:_ringNotification];
+
+}
+
+-(void)cancelNotification:(CDVInvokedUrlCommand*)command {
+    [[UIApplication sharedApplication] cancelLocalNotification:_ringNotification];
+}
+
+-(void)setSpeaker:(CDVInvokedUrlCommand*)command {
+    NSString *mode = [command.arguments objectAtIndex:0];
+    if([mode isEqual: @"on"]) {
+        UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
+        AudioSessionSetProperty (
+            kAudioSessionProperty_OverrideAudioRoute,
+            sizeof (audioRouteOverride),
+            &audioRouteOverride
+        );
+    }
+    else {
+        UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_None;
+        AudioSessionSetProperty (
+            kAudioSessionProperty_OverrideAudioRoute,
+            sizeof (audioRouteOverride),
+            &audioRouteOverride
+        );
+    }
 }
 
 # pragma mark private methods
