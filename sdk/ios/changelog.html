@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Twilio Client iOS Changes</title>
+    <link rel="stylesheet" href="assets/docs-style.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shCore.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shThemeDefault.css">
+    <script type="text/javascript" src="assets/syntaxhighlighter/shCore.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushJava.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushObjC.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPhp.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushXml.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPython.js"></script>
+</head>
+<body>
+
+<div id="header">
+    <div id="header-logo">
+        <img src="assets/twilio-header-logo.png" alt="Twilio">
+    </div>
+</div>
+
+<div id="content">
+
+<h1 id="twilio-client-ios-changes">Twilio Client iOS Changes</h1>
+
+<h2 id="nov-23-2015">1.2.7 (Nov. 23, 2015)</h2>
+
+<h3 id="bug-fixes">Bug Fixes</h3>
+
+<ul>
+  <li>CLIENT-1690 - Fixes a bug where an application was not able to receive presence events after calling <code>unlisten</code> then <code>listen</code> sequentially on <code>TCDevice</code>.</li>
+  <li>CLIENT-1695 - Initializing or updating a <code>TCDevice</code> instance with a <code>nil</code> or empty capability token string will now trigger the <code>device:didStopListeningForIncomingConnections:</code> delegate callback.</li>
+  <li>CLIENT-1812 - The SDK will no longer print log messages for temporary SIP registration redirects.</li>
+  <li>CLIENT-1878 - Fixes a crash when initializing or updating a <code>TCDevice</code> instance.</li>
+</ul>
+
+<h2 id="nov-9-2015">1.2.6 (Nov. 9, 2015)</h2>
+
+<h3 id="bug-fixes-1">Bug Fixes</h3>
+
+<ul>
+  <li>CLIENT-1688 - The SDK now gracefully handles audio interruptions from incoming phone calls and other audio events. The audio of a Twilio Client call will resume after an interruption ends.</li>
+  <li>CLIENT-1950 - The SDK automatically rejects pending incoming connections upon network reachability change events.</li>
+</ul>
+
+<h3 id="api-changes">API Changes</h3>
+
+<ul>
+  <li>CLIENT-2038 - New API <code>setMetricsEnabled:(BOOL)enabled</code> added in <code>TwilioClient</code> to enable/disable the collection and transmission to Twilio of call quality analytics. This feature is enabled by default.</li>
+</ul>
+
+<h2 id="sep-3-2015">1.2.5 (Sep. 3, 2015)</h2>
+
+<h3 id="bug-fixes-2">Bug Fixes</h3>
+
+<ul>
+  <li>CLIENT-1878 - <code>TCDevice</code> no longer automatically reconnects to Twilio following a disconnection due to bad network connectivity. The previous behavior produced a crash when the application developer simultaneously attempted to reconnect at the <code>device:didStopListeningForIncomingConnections:</code> delegate callback.</li>
+</ul>
+
+<h2 id="aug-13-2015">1.2.4 (Aug. 13, 2015)</h2>
+
+<h3 id="bug-fixes-3">Bug Fixes</h3>
+
+<ul>
+  <li>CLIENT-1878 - Fix crash when multiple <code>TCDevice</code> initializations or updates are made under bad network connectivity.</li>
+  <li>CLIENT-1823 - Twilio Client crashes when <code>TCDevice</code> set to <code>nil</code>.</li>
+  <li>CLIENT-1928 - Fix crash when phone is in airplane mode.</li>
+  <li>CLIENT-1915 - Convert BasicPhone sample app to ARC.</li>
+</ul>
+
+<h2 id="mar-19-2015">1.2.3 (Mar. 19, 2015)</h2>
+
+<h3 id="bug-fixes-4">Bug Fixes</h3>
+
+<ul>
+  <li>MSDK-181 - Fix crash when placing a call before registration completes.</li>
+  <li>MSDK-305 - Remove non-referenced libraries from sample projects.</li>
+  <li>MSDK-309 - Suppress warning message about wildcard certificates.</li>
+  <li>MSDK-388 - Fix crash on <code>TCPresenceEvent</code>.</li>
+  <li>MSDK-477 - Fix rare registration failure with redirect.</li>
+</ul>
+
+<h2 id="jan-29-2015">1.2.2 (Jan. 29, 2015)</h2>
+
+<h3 id="api-changes-1">API Changes</h3>
+
+<ul>
+  <li>MSDK-87 - New API to obtain version of iOS SDK.</li>
+</ul>
+
+<h3 id="bug-fixes-5">Bug Fixes</h3>
+
+<ul>
+  <li>MSDK-8 - <code>TCDevice</code> state becomes <code>TCDeviceStateOffline</code> whenever its capability token expires.</li>
+  <li>MSDK-77 - <code>TCConnectionState</code> enum is now accessible from Swift.</li>
+  <li>MSDK-93 - The SDK now includes separate libraries for OpenSSL.</li>
+  <li>MSDK-98 - The SDK no longer crashes when initializing <code>TCCommandHandler</code> in iOS 7.0 and lower.</li>
+  <li>MSDK-100 - Corrected a crash that could occasionally occur when un-registering a <code>TCDevice</code> by calling <code>-unlisten</code> or due to capability token expiration.</li>
+  <li>MSDK-101, MSDK-102, MSDK-146, MSDK-181 and MSDK-183 - A number of crashes that could occur when calling <code>[TCDevice connect]</code> have been corrected.</li>
+  <li>MSDK-106 - The SDK no longer pauses music when <code>[TCDevice initWithCapabilityToken]</code> is called.</li>
+  <li>MSDK-184 - The SDK now uses OpenSSL v1.0.1k.</li>
+</ul>
+
+<h2 id="dec-18-2014">1.2.1 (Dec. 18, 2014)</h2>
+
+<h3 id="bug-fixes-6">Bug Fixes</h3>
+
+<ul>
+  <li>MSDK-42 - Eliminated "duplicate symbol" error loading lib in TwilioSDK 1.2.</li>
+  <li>MSDK-47 - Eliminated a rare crash when handling a 302 redirect response from Twilio. </li>
+  <li>MSDK-56 - TwilioSDK no longer holds onto <code>TCConnection</code> objects.</li>
+  <li>MSDK-58 - Fixed a problem where <code>didReceiveIncomingConnection</code> did not work as expected when handling multiple <code>TCDevice</code> objects. </li>
+  <li>MSDK-76 - Eliminated a crash caused by accessing <code>pjlib</code> in an unknown/external thread. </li>
+</ul>
+
+<h2 id="nov-25-2014">1.2.0 (Nov. 25, 2014)</h2>
+
+<p>Initial 1.2 release.</p>
+
+<p><strong>Support for Twilio’s Global Low Latency Routing</strong> </p>
+
+<p>Twilio Client for iOS now takes advantage of Twilio’s Global Low Latency (GLL) routing to further improve call quality. Media for all Twilio Client calls is routed to the Twilio data center geographically nearest to the user, significantly reducing call latency.</p>
+
+<p><strong>Support for arm64</strong> </p>
+
+<p>Twilio Client for iOS can now target the 64-bit runtime, improving the performance of your Twilio Client application.</p>
+
+<p><strong>Symbol Prefixing</strong> </p>
+
+<p>All internal symbols are now prefixed with twilio_ to avoid conflicts with other dependencies.</p>
+
+<p><strong>Richer Debug Logging</strong> </p>
+
+<p>We’ve made it easier to find and resolve issues in your Twilio Client iOS application with more detailed logging.</p>
+
+<pre class="brush: oc">
+[[TwilioClient sharedInstance] setLogLevel:TC_LOG_DEBUG];
+</pre>
+
+<p>Available log levels in order of verbosity: <code>TC_LOG_OFF</code>, <code>TC_LOG_ERROR</code>, <code>TC_LOG_WARN</code>, <code>TC_LOG_INFO</code>, <code>TC_LOG_DEBUG</code>, <code>TC_LOG_VERBOSE</code>.</p>
+
+<p><strong>Call Sid Availability</strong></p>
+
+<p>Call Sid is available for outgoing calls as well.</p>
+
+<p><strong>Improved Sample Applications</strong></p>
+
+<p>We have improved both BasicPhone and Quickstart sample applications. Server backend can be simply installed to your Heroku account from <a href="https://github.com/twilio/mobile-quickstart">https://github.com/twilio/mobile-quickstart</a>.</p>
+
+<p><strong>Supported iOS Releases</strong></p>
+
+<ul>
+  <li>iOS 6.0+</li>
+  <li>iOS 7.0+</li>
+  <li>iOS 8.0+</li>
+</ul>
+
+<p><strong>Supported iOS Devices</strong></p>
+
+<ul>
+  <li>iPhone 4S and later (running iOS 6 and later)</li>
+  <li>iPad 2 and later (running iOS 6 and later)</li>
+</ul>
+</div>
+
+<script type="text/javascript">
+    SyntaxHighlighter.defaults['auto-links'] = false;
+    SyntaxHighlighter.defaults['toolbar'] = false;
+    SyntaxHighlighter.defaults['gutter'] = false;
+    SyntaxHighlighter.config.space=' ';
+    SyntaxHighlighter.all();
+</script>
+
+</body>
+</html>

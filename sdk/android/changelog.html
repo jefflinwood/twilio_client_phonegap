@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Twilio Client for Android Changes</title>
+    <link rel="stylesheet" href="assets/docs-style.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shCore.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shThemeDefault.css">
+    <script type="text/javascript" src="assets/syntaxhighlighter/shCore.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushJava.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushObjC.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPhp.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushXml.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPython.js"></script>
+</head>
+<body>
+
+<div id="header">
+    <div id="header-logo">
+        <img src="assets/twilio-header-logo.png" alt="Twilio">
+    </div>
+</div>
+
+<div id="content">
+
+<h1 id="twilio-client-android-sdk-changes">Twilio Client Android SDK Changes</h1>
+
+<h2 id="nov-10-2015">1.2.8 (Nov. 10, 2015)</h2>
+
+<h3 id="new-features">New Features</h3>
+
+<ul>
+  <li>CLIENT-2014 - New API <code>setMetrics(boolean)</code> added in <code>TwilioClient</code> to enable/disable the collection and transmission to Twilio of call quality analytics. This feature is enabled by default.</li>
+</ul>
+
+<h3 id="bug-fixes">Bug Fixes</h3>
+
+<ul>
+  <li>CLIENT-2042 - Replacement of HttpClient with HttpURLConnection in Quickstart applications.</li>
+</ul>
+
+<h2 id="oct-9-2015">1.2.7 (Oct. 9, 2015)</h2>
+
+<h3 id="bug-fixes-1">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>CLIENT-1888 - Added support for Extension Mechanisms for DNS (EDNS0) record types.</p>
+  </li>
+  <li>
+    <p>CLIENT-1993,2000,2003 - Added support for Android 6.0; fixed crashes when releasing the Twilio Device and handling both incoming and outgoing calls.</p>
+  </li>
+</ul>
+
+<h2 id="aug-17-2015">1.2.6 (Aug. 17, 2015)</h2>
+
+<h3 id="bug-fixes-2">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>CLIENT-1916 - onStopListening callback is now always called when device is updated with a new capability token.</p>
+  </li>
+  <li>
+    <p>CLIENT-1919 - Fixed a crash when passing null to Device.connect() for an optional parameter.</p>
+  </li>
+  <li>
+    <p>CLIENT-1927 - Connection.getParameters() returns a Map of URL decoded values.</p>
+  </li>
+  <li>
+    <p>CLIENT-1929, CLIENT-1930, CLIENT-1934, CLIENT-1938 - Fixed a crash caused by improper shutdown of TwilioClientService.</p>
+  </li>
+  <li>
+    <p>Note: CLIENT-1938 fix invalidates CLIENT-1903 fix provided in 1.2.5. If service attribute <code>android:stopWithTask</code> for TwilioClientService is set to true in the AndroidManifest.xml for TwilioClientService, the service will automatically be stopped by the system if the user removes a task that is rooted in one of the application's activities.</p>
+  </li>
+</ul>
+
+<h2 id="july-23-2015">1.2.5 (July 23, 2015)</h2>
+
+<h3 id="bug-fixes-3">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>CLIENT-1849, CLIENT-1851 - Extended SIP registration error handling.</p>
+  </li>
+  <li>
+    <p>CLIENT-1893 - Log messages for SIP registration redirects are now logged at INFO level.</p>
+  </li>
+  <li>
+    <p>CLIENT-1897 - Fixed a crash that occurred during a network connectivity change sequence.</p>
+  </li>
+  <li>
+    <p>CLIENT-1903 - Fixed an issue where clients could remain registered and receive incoming calls after the user application is killed and restarted. To utilize this fix, service attribute <code>android:stopWithTask</code> must be set to false in the AndroidManifest.xml for TwilioClientService.</p>
+  </li>
+  <li>
+    <p>Note: The <code>android:targetSdkVersion</code> has been changed to 15 to leverage additional functionality from the Android Service component, <code>android:minSdkVersion</code> remains 8.</p>
+  </li>
+</ul>
+
+<h2 id="june-25-2015">1.2.4 (June 25, 2015)</h2>
+
+<h3 id="bug-fixes-4">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>CLIENT-1879 - onConnecting callback is now called only once after Device.connect().</p>
+  </li>
+  <li>
+    <p>CLIENT-1881 - onStopListening callback is now called when device is updated with Outgoing-only token.</p>
+  </li>
+  <li>
+    <p>CLIENT-1880 - onStartListening callback is now called when updated with valid capability token.</p>
+  </li>
+  <li>
+    <p>CLIENT-1882 - SDK now receives presence events when subscribed.</p>
+  </li>
+</ul>
+
+<h2 id="june-11-2015">1.2.3 (June 11, 2015)</h2>
+
+<h3 id="bug-fixes-5">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>CLIENT-1699, CLIENT-1705 - Fixed a number of crashes that could occur when initial SIP request is sent to the server.</p>
+  </li>
+  <li>
+    <p>CLIENT-1706 - Moved HTTP GET request from the UI thread to Asynctask in MonkeyPhone example.</p>
+  </li>
+  <li>
+    <p>CLIENT-1846, CLIENT-1869, CLIENT-1870 - Fixed a crash that occurred on network connectivity change.</p>
+  </li>
+  <li>
+    <p>CLIENT-1847 - The SDK now fires OnStartListening callback after SIP registration completes.</p>
+  </li>
+  <li>
+    <p>CLIENT-1853, CLIENT-1691 - Fixed a number of crashes occurred calling Twilio.shutdown().</p>
+  </li>
+</ul>
+
+<h2 id="mar-19-2015">1.2.2 (Mar. 19, 2015)</h2>
+
+<h3 id="new-features-1">New Features</h3>
+
+<ul>
+  <li>MSDK-88 - Android SDK exposes its version.</li>
+</ul>
+
+<h3 id="bug-fixes-6">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>MSDK-113 - Added capability token validity check before making an outbound call.</p>
+  </li>
+  <li>
+    <p>MSDK-307 - ConnectionListener.onConnecting() is now invoked on incoming connections.</p>
+  </li>
+  <li>
+    <p>MSDK-389 - Copy params map passed to Device.connect() instead of modifying the user-supplied map.</p>
+  </li>
+  <li>
+    <p>MSDK-475 - Eliminated issue with updating capability token after token expires.</p>
+  </li>
+  <li>
+    <p>MSDK-476 - Fix rare registration failure with redirect.</p>
+  </li>
+  <li>
+    <p>MSDK-482 - Suppress wildcard certificate warning.</p>
+  </li>
+</ul>
+
+<h2 id="jan-29-2014">1.2.1 (Jan. 29, 2014)</h2>
+
+<h3 id="new-features-2">New Features</h3>
+
+<h3 id="bug-fixes-7">Bug Fixes</h3>
+
+<ul>
+  <li>
+    <p>ASDK-8 - CallSid is now available for outgoing calls.</p>
+  </li>
+  <li>
+    <p>MSDK-52 - Eliminated a rare crash when handling a 302 redirect response from Twilio.</p>
+  </li>
+  <li>
+    <p>MSDK-79, MSDK-64, MSDK-66, MSDK-96 and MSDK-178 - Fixed a number of crashes that could occur when answering an incoming call.</p>
+  </li>
+  <li>
+    <p>MSDK-89 - Fixed a crash that could occur when initializing a Device object with the incoming capability.</p>
+  </li>
+  <li>
+    <p>MSDK-298 - The SDK now uses OpenSSL v1.0.1k</p>
+  </li>
+  <li>
+    <p>MSDK-299 - Fixed a crash that would occur when caller hangs up right after initiating a call.</p>
+  </li>
+</ul>
+
+<h2 id="dec-18-2014">1.2.0 (Dec. 18, 2014)</h2>
+
+<p>Initial 1.2 release.</p>
+
+<p><strong>Support for Twilio’s Global Low Latency Routing</strong></p>
+
+<p>Twilio Client for Android now takes advantage of Twilio’s Global Low Latency (GLL) routing to further improve call quality. Media for all Twilio Client calls is routed to the Twilio data center geographically nearest to the user, significantly reducing call latency.</p>
+
+<p><strong>Richer Debug Logging</strong></p>
+
+<p>We’ve made it easier to find and resolve issues in your Twilio Client Android application with detailed logging with a simple API call.</p>
+
+<pre class="brush: java">
+Twilio.setLogLevel(int level);
+</pre>
+
+<p>The level parameter values correspond to the levels provided by the Android SDK :  <code>Log.ASSERT</code>,<code>Log.DEBUG</code>,  <code>Log.ERROR</code>, <code>Log.INFO</code>, <code>Log.VERBOSE</code>,<code>Log.WARN</code>.</p>
+</div>
+
+<script type="text/javascript">
+    SyntaxHighlighter.defaults['auto-links'] = false;
+    SyntaxHighlighter.defaults['toolbar'] = false;
+    SyntaxHighlighter.defaults['gutter'] = false;
+    SyntaxHighlighter.config.space=' ';
+    SyntaxHighlighter.all();
+</script>
+
+</body>
+</html>

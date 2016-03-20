@@ -5,11 +5,13 @@
     version="1.0.3">
 
     <name>TwilioClient</name>
-    <description>Use the native Twilio Client for iOS or Android with Cordova/PhoneGap and the Twilio Client JavaScript API</description>
+    <description>Use the native Twilio Client for iOS or Android wtih Cordova/PhoneGap and the Twilio Client JavaScript API</description>
     <author>Stevie Graham/Lyle Pratt/Jeff Linwood</author>
     <license>Apache</license>
 
-    <asset src="www/tcPlugin.js" target="js/tcPlugin.js" />
+    <js-module src="www/tcPlugin.js" name="TCPlugin">
+      <clobbers target="window.Twilio"/>
+    </js-module>
 
     <!-- android -->
     <platform name="android">
@@ -34,14 +36,19 @@
                 target-dir="src/com/phonegap/plugins/twilioclient" />
          <source-file src="src/android/com/phonegap/plugins/twilioclient/TCPlugin.java"
                 target-dir="src/com/phonegap/plugins/twilioclient" />
-        <info>
-This plugin also uses the Android Support Library V4. You only need one copy of this library (a JAR file) in your libs directory. See http://developer.android.com/tools/support-library/index.html for information about how to download this library to your computer. Then copy android-support-v4.jar to your libs folder.        
         
-You need to download __Twilio Client for Android__ from https://www.twilio.com/docs/client/android. Uncompress the download - you will need to follow one step that plugman can not do yet:
-
-* Add the Twilio Client Java libraries (everything in the libs folder) to your project's libs folder - (platforms/android/libs)
-
-        </info>
+        <source-file src="sdk/android/libs/armeabi/libtwilio-native.so"
+                target-dir="libs/armeabi" />
+        <source-file src="sdk/android/libs/armeabi-v7a/libtwilio-native.so"
+                target-dir="libs/armeabi-v7a" />
+        <source-file src="sdk/android/libs/mips/libtwilio-native.so"
+                target-dir="libs/mips" />
+        <source-file src="sdk/android/libs/x86/libtwilio-native.so"
+                target-dir="libs/x86" />
+        <source-file src="sdk/android/libs/twilioclient-android.jar"
+                target-dir="libs" />
+                
+        <dependency id="cordova-android-support-v4" url="https://github.com/peder541/cordova-plugin-android-support-v4.git" />
     </platform>
 
     <!-- ios -->
@@ -71,12 +78,14 @@ You need to download __Twilio Client for Android__ from https://www.twilio.com/d
         <header-file src="src/ios/TCPlugin.h" />
         <source-file src="src/ios/TCPlugin.m" />
 
-        <info>
-You need to download __Twilio Client for iOS__ from https://www.twilio.com/docs/client/ios. Uncompress the download - you will need to follow a few steps that plugman can not do yet:
-
-* Add the Twilio Client static libraries (the .a files in the Libraries folder) to your Xcode project
-
-* Add the Twilio Client headers files (the .h files in the Headers folder) to your Xcode project
-        </info>
+        <header-file src="sdk/ios/Headers/TCConnection.h" />
+        <header-file src="sdk/ios/Headers/TCConnectionDelegate.h" />
+        <header-file src="sdk/ios/Headers/TCDevice.h" />
+        <header-file src="sdk/ios/Headers/TCDeviceDelegate.h" />
+        <header-file src="sdk/ios/Headers/TCPresenceEvent.h" />
+        <header-file src="sdk/ios/Headers/TwilioClient.h" />
+        <source-file src="sdk/ios/Libraries/libTwilioClient.a" framework="true" />
+        <source-file src="sdk/ios/Libraries/libcrypto.a" framework="true" />
+        <source-file src="sdk/ios/Libraries/libssl.a" framework="true" />
     </platform>
 </plugin>

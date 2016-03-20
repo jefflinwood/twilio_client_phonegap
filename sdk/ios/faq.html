@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Twilio Client iOS Frequently Asked Questions</title>
+    <link rel="stylesheet" href="assets/docs-style.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shCore.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shThemeDefault.css">
+    <script type="text/javascript" src="assets/syntaxhighlighter/shCore.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushJava.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushObjC.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPhp.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushXml.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPython.js"></script>
+</head>
+<body>
+
+<div id="header">
+    <div id="header-logo">
+        <img src="assets/twilio-header-logo.png" alt="Twilio">
+    </div>
+</div>
+
+<div id="content">
+
+<h1 id="twilio-client-ios-frequently-asked-questions">Twilio Client iOS Frequently Asked Questions</h1>
+
+<p><a href="#building">How do I Build an App?</a></p>
+
+<p><a href="#threading">How do I Handle Multi-Threading?</a></p>
+
+<p><a href="#backgrounding">How do I Set up Backgrounding?</a></p>
+
+<p><a href="#sounds">How do I Configure Sounds?</a></p>
+
+<h2 id="a-namebuildinghow-do-i-build-an-appa"><a name="building">How do I Build an App?</a></h2>
+
+<p>The Twilio Client iOS library works with iOS 6 and higher, and has
+been tested on iOS 6, 7 and 8.  </p>
+
+<p>If you are using CocoaPods, please include the TwilioSDK 
+PodSpec in your Podfile. CocoaPods sets up header and library files and includes necessary frameworks in your project.</p>
+
+<p>If you do not use CocoaPods, please follow the steps below to setup your project:</p>
+
+<ol>
+  <li>Add the static libraries (files ending in <code>.a</code>) in the
+<code>Libraries/</code> folder to your project.</li>
+  <li>Add the <code>Headers/</code> folder to "Header Search
+Paths" in your target's Build Settings.</li>
+  <li>Add the following iOS SDK frameworks to your project:
+    <ul>
+      <li><strong>AudioToolbox.framework</strong> </li>
+      <li><strong>AVFoundation.framework</strong> </li>
+      <li><strong>CFNetwork.framework</strong> </li>
+      <li><strong>SystemConfiguration.framework</strong>   </li>
+    </ul>
+  </li>
+  <li>Add <code>-ObjC</code> to "Other Linker Flags" in your target's Build Settings. </li>
+</ol>
+
+<p>You will also need to configure "Audio and AirPlay" and "Voice over IP"
+background flags for your application.  See <a href="#backgrounding">How do I Set up Backgrounding?</a> for more information.</p>
+
+<p>Optionally, if you are using the sound resources provided by the Twilio 
+Client library, add the contents of <code>Resources/</code> to the Resources of your project.</p>
+
+<p>The Twilio Client package requires and includes
+<a href="https://www.openssl.org/">OpenSSL</a> static libraries that you must add to
+your project.  We currently ship pre-built versions of OpenSSL 1.0.1k
+for you to use.  If you require a modified or newer version of OpenSSL
+that you build yourself, you may substitute your own copies of
+<code>libcrypto.a</code> and <code>libssl.a</code>.  However, using an older version
+(especially from the obsolete 0.9.8 or 1.0.0 series) is unlikely to
+work properly and is unsupported.</p>
+
+<p>For convenience, the <code>libTwilioClient.a</code> library, as well as the 
+OpenSSL libraries, are universal binaries containing code for the
+following processor architectures:</p>
+
+<ul>
+  <li>i386 (for iOS Simulator)</li>
+  <li>x86_64 (for iOS Simulator)</li>
+  <li>armv7</li>
+  <li>armv7s</li>
+  <li>arm64</li>
+</ul>
+
+<p>iOS devices that use a processor that only supports the older armv6
+architecture are <strong>not</strong> supported, including the following:</p>
+
+<ul>
+  <li>Original iPhone</li>
+  <li>iPhone 3G</li>
+  <li>iPod Touch 1st generation</li>
+  <li>iPod Touch 2nd generation</li>
+</ul>
+
+<p>Note that some older (but supported) devices, such as the iPhone 3GS
+and iPod Touch 3rd generation, may struggle to perform well given the
+CPU-intensive audio processing performed during calls.</p>
+
+<h2 id="a-namethreadinghow-do-i-handle-multi-threadinga"><a name="threading">How do I Handle Multi-Threading?</a></h2>
+
+<p>Much of the work in Twilio Client iOS SDK is performed in background
+threads.  This includes callbacks to Twilio Client delegate objects.
+You should ensure that you are on the main thread when performing any UI
+updates in response to a Twilio Client delegate callback.</p>
+
+<p>For example, if one of your objects implements the <code>TCConnectionDelegate</code>
+protocol and you have a view which should update in response to the
+<code>-(void)connectionDidDisconnect:(TCConnection*)connection</code> method, you
+should write code similar to the following:</p>
+
+<pre class="brush: oc">
+-(void)connectionDidDisconnect:(TCConnection*)connection  
+{
+    // add code to update necessary model objects or other state  
+    // ...  
+
+    // finally, update the view's UI, being sure to do so on the main thread  
+    [myView performSelectorOnMainThread:@selector(syncUI:)  
+                             withObject:param  
+                          waitUntilDone:NO];  
+}
+</pre>
+
+<p>The internal architecture of Twilio Client for iOS makes use of an
+asynchronous queuing system to route the heavy lifting of API calls onto
+a background thread managed by the library.  This helps ensure that API
+calls made from the main thread will not cause UI stuttering, and it
+also allows you to invoke the Twilio Client API from any thread in your
+application.</p>
+
+<h2 id="a-namebackgroundinghow-do-i-set-up-backgroundinga"><a name="backgrounding">How do I Set up Backgrounding?</a></h2>
+
+<p>You want to ensure that the proper iOS flags (<code>audio</code>, <code>voip</code>) are
+set for your application plist key "UIBackgroundModes" if your
+application supports backgrounding.  Please, note that the <code>HelloMonkey-Info.plist</code>
+file has the following entries in the Quickstart project:</p>
+
+<pre class="brush: xml">
+&lt;key&gt;UIBackgroundModes&lt;/key&gt;
+&lt;array&gt;
+    &lt;string&gt;audio&lt;/string&gt;  
+    &lt;string&gt;voip&lt;/string&gt;  
+&lt;/array&gt;
+</pre>
+
+<p>In Xcode 6, you can set this in your application target by navigating to
+the "Capabilities" pane and under "Background Modes" and checking "Audio and
+AirPlay" and "Voice over IP".</p>
+
+<p>When <code>TCDevice</code> is initialized with incoming connection capability, 
+the Twilio Client iOS SDK uses <code>setKeepAliveTimeout:handler:</code> to 
+maintain its registration to Twilio's servers. You are therefore unable 
+to use <code>setKeepAliveTimeout:handler:</code> in your application code as this 
+would interfere with the SDK's background behavior.</p>
+
+<p>For more information on backgrounding apps, including how to present
+notifications for incoming calls when your app is in background, see
+"Scheduling Local Notifications" in <a href="https://developer.apple.com/library/ios/#documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Introduction/Introduction.html">Local and Remote Notification
+Programming Guide</a>.</p>
+
+<h2 id="a-namesoundshow-do-i-configure-soundsa"><a name="sounds">How do I Configure Sounds?</a></h2>
+
+<p>Twilio Client comes with optional audio files for various connection
+events including an outgoing connection sound, an incoming connection
+sound, a disconnected sound, and tones for the
+<code>-[TCConnection sendDigits:(NSString*)digits]</code> API.</p>
+
+<p>If these resources are included in your project (see <a href="#building">How do I Build an App?</a>), 
+they will be automatically invoked by Twilio Client
+library at appropriate times during a connection's life-cycle unless
+you have overridden the relevant sound property on <code>TCDevice</code>.</p>
+
+<p>If no other connections are pending or in-progress, the incoming
+connection sound will be played in a loop through the device's primary
+speaker as long as the Core Audio route description for output is either
+the speaker or receiver (the built-in speaker you hold to your ear when
+you make a call; not all iOS devices have a receiver), otherwise the
+sound will be played through the current output audio route (e.g.
+headphones, Bluetooth accessory, etc.).</p>
+
+<p>Once a connection is in-progress, the first of any additional incoming
+connections will trigger the sound once through the current output audio
+route.</p>
+
+<p>All other sounds will be played through the current output audio route.</p>
+
+<p>For more information about audio routes, please see 
+<a href="http://developer.apple.com/library/IOs/#documentation/Audio/Conceptual/AudioSessionProgrammingGuide/Introduction/Introduction.html">Audio Session Programming Guide</a>.</p>
+
+<p>If you need more advanced control over playback of sounds, you may
+provide audio resources with alternate names (and/or disable the sounds
+using the relevant properties on <code>TCDevice</code>) and manage playback using
+your own classes.</p>
+</div>
+
+<script type="text/javascript">
+    SyntaxHighlighter.defaults['auto-links'] = false;
+    SyntaxHighlighter.defaults['toolbar'] = false;
+    SyntaxHighlighter.defaults['gutter'] = false;
+    SyntaxHighlighter.config.space=' ';
+    SyntaxHighlighter.all();
+</script>
+
+</body>
+</html>

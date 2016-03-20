@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Getting Started with Twilio Client Android</title>
+    <link rel="stylesheet" href="assets/docs-style.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shCore.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shThemeDefault.css">
+    <script type="text/javascript" src="assets/syntaxhighlighter/shCore.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushJava.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushObjC.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPhp.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushXml.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPython.js"></script>
+</head>
+<body>
+
+<div id="header">
+    <div id="header-logo">
+        <img src="assets/twilio-header-logo.png" alt="Twilio">
+    </div>
+</div>
+
+<div id="content">
+
+<h1 id="twilio-client-android-frequently-asked-questions">Twilio Client Android Frequently Asked Questions</h1>
+
+<p><a href="#building">How do I build an App?</a></p>
+
+<p><a href="#minversion">What is the minimum version of Android supported in Twilio Android SDK?</a></p>
+
+<p><a href="#token">Why am I required to use a Capability Token?</a></p>
+
+<p><a href="#service">How does Twilio Client SDK for Android use service?</a></p>
+
+<p><a href="#initialize">How do I initialize Twilio Client SDK for Android?</a></p>
+
+<p><a href="#incoming">How do I handle Incoming calls?</a></p>
+
+<p><a href="#permissions">What permissions are required for Android application using Twilio Client SDK?</a></p>
+
+<p><a href="#threading">How do I Handle Multi-Threading?</a></p>
+
+<p><a href="#sounds">How do I Configure Sounds?</a></p>
+
+<p><a href="#proguard">What is the recommended proguard directives (exclusions) when running the Twilio Client for Android?</a></p>
+
+<h2 id="a-namebuildinghow-do-i-build-an-appa"><a name="building">How do I build an App?</a></h2>
+
+<p>Including the Twilio Client SDK in your project requires the following steps.
+Note that this assumes you are using Eclipse with version 18 (or higher)
+of the Android Developer Tools plugin, as well as version 18 of the
+Android SDK.</p>
+
+<ol>
+  <li>Copy the <code>libs/</code> folder tree into your project. This includes both
+the Twilio Client JAR file and pre-compiled native libraries.  The
+ADT plugin as of version 17 will automatically pick up JAR files
+inside <code>libs/</code> under your project root.</li>
+  <li>(optional) If you are using the source resources provided by the Twilio
+Client library, copy the .wav files in the <code>sounds/</code> folder
+into the <code>res/raw/</code> folder of your project.</li>
+</ol>
+
+<p>You should then have the following structure in your app's project folder:</p>
+
+<ul>
+  <li><code>$PROJECT_ROOT/</code>
+    <ul>
+      <li><code>libs/</code>
+        <ul>
+          <li><code>armeabi/</code>
+            <ul>
+              <li><code>libtwilio-native.so</code></li>
+            </ul>
+          </li>
+          <li><code>armeabi-v7a/</code>
+            <ul>
+              <li><code>libtwilio-native.so</code></li>
+            </ul>
+          </li>
+          <li><code>mips/</code>
+            <ul>
+              <li><code>libtwilio-native.so</code></li>
+            </ul>
+          </li>
+          <li><code>x86/</code>
+            <ul>
+              <li><code>libtwilio-native.so</code></li>
+            </ul>
+          </li>
+          <li><code>twilio-android-sdk-$VERSION.jar</code></li>
+        </ul>
+      </li>
+      <li><code>res/</code>
+        <ul>
+          <li><code>raw/</code>
+            <ul>
+              <li><code>disconnected.wav</code></li>
+              <li><code>incoming.wav</code></li>
+              <li><code>outgoing.wav</code></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>From there, you should be able to build your project as you otherwise would,
+and the correct files should end up in the final APK package file.</p>
+
+<p>If you know for certain that you do not want/need to support x86-based
+or MIPS-based Android devices, you can delete the <code>mips/</code> and/or <code>x86/</code>
+subdirectories of the <code>libs/</code> directory.  However, for maximum
+compatibility, we recommended that you leave them there.  At install
+time on a user's device, the Android package manager will automatically
+discard all libraries that it cannot use.</p>
+
+<p>The <code>.wav</code> files in the <code>res/</code> subdirectory are for notification sounds.
+If you do not wish to use the notification sounds, you may leave them
+out.  You can also replace them with your own sounds, but note that they
+must be 44.1kHz, 16-bit, 2-channel WAVE files.</p>
+
+<h2 id="a-nameminversionwhat-is-the-minimum-version-of-android-supported-in-twilio-client-sdk-for-androida"><a name="minversion">What is the minimum version of Android supported in Twilio Client SDK for Android?</a></h2>
+
+<p>Twilio Client for Android should be compatible with any Android phone or
+tablet running Android 2.2 ("Froyo") or higher.  Google TV devices are
+not supported, as Google does not have an NDK release for the GTV, which
+has a device ABI incompatible with phones and tablets.</p>
+
+<p>Hardware-wise, calls may not perform well (stuttering, drop-outs) on
+devices with an ARM processor slower than 800MHz or so.</p>
+
+<h2 id="a-nametokenwhy-am-i-required-to-use-a-capability-tokena"><a name="token">Why am I required to use a Capability Token?</a></h2>
+
+<p>The Capability Token that you provide to the Twilio Client library and your 
+Twilio Account's Auth Token are two pieces of information that should not be 
+embedded into your Android application when sent to Google Play or an alternate
+Android marketplace.  These tokens allow access to your account and application by anyone, so you 
+should keep these secret and manage access to them very carefully.</p>
+
+<p>The server that hands out Capability Tokens should be set up so you can control
+and monitor the access to the tokens, establish firewalls, set up
+blacklists/whitelists, and follow other established security best practices.</p>
+
+<h2 id="a-nameservicehow-does-twilio-client-sdk-for-android-use-servicea"><a name="service">How does Twilio Client SDK for Android use service?</a></h2>
+
+<p>If you're familiar with the lifecycle of a backgrounded Android application, 
+you'll know that <a href="http://developer.android.com/reference/android/app/Activity.html">Activities</a> that are a part of your application can be paused, stopped, 
+or even destroyed as needed by the OS.  Usually just switching back from
+an app to the Home Screen will cause the app's current Activity to be paused within
+a few seconds.</p>
+
+<p>When this happens, the Twilio Client library needs to ensure that its network connections 
+and in-call audio continue.  Twilio Client runs an Android <a href="http://developer.android.com/reference/android/app/Service.html">Service</a> to maintain this functionality 
+while your application is not in the foreground.</p>
+
+<p>This service must be declared in your <code>AndroidManifest.xml</code> file like so:</p>
+
+<pre class="brush: xml">
+&lt;application android:label="@string/app_name" android:icon="@drawable/ic_launcher"&gt;
+
+    &lt;!-- other application activity/service/broadcast-receiver tags --&gt;
+
+    &lt;service android:name="com.twilio.client.TwilioClientService" android:exported="false" android:stopWithTask="false" /&gt;
+
+&lt;/application&gt;
+</pre>
+
+<p>Make special note of the <code>android:exported="false"</code> attribute.  This is
+necessary to allow multiple instances of the <a href="http://developer.android.com/reference/android/app/Service.html">Service</a> to run if there are
+multiple applications installed on the device that use Twilio Client.
+The library will throw a <code>RuntimeException</code> if this attribute is not present.</p>
+
+<p>Also, notice the inclusion of the <code>android:stopWithTask="false"</code> attribute. This parameter ensures a specific cleanup sequence is executed by the SDK when the application is killed. The Twilio Client service will still be shutdown when the application is killed.</p>
+
+<p>Android will try to keep Services running even when an application's main Activity has been destroyed.  There are cases where the OS will need to reclaim memory and may have to kill background services.  Fortunately, Android <em>will</em> reschedule killed services for restart.</p>
+
+<p>If the service is killed, Twilio Client will reinitialize itself in the background and restore the last known state of any <a href="javadoc/com/twilio/client/Device.html">Devices</a> your application has created.  On startup your application will need to see if Twilio Client is already initialized from a prior launch.</p>
+
+<h2 id="a-nameinitializehow-do-i-initialize-twilio-client-sdk-for-androida"><a name="initialize">How do I initialize Twilio Client SDK for Android?</a></h2>
+
+<p>The Twilio Client SDK for Android requires explicit initialization by calling <a href="javadoc/com/twilio/client/Twilio.html#initialize(Context,%20com.twilio.client.Twilio.InitListener)">Twilio.initialize()</a>
+with a <a href="http://developer.android.com/reference/android/content/Context.html">Context</a> parameter.  We 
+highly recommend passing the <a href="http://developer.android.com/reference/android/app/Application.html">Application</a>
+context which can be retrieved by calling <a href="http://developer.android.com/reference/android/content/ContextWrapper.html#getApplicationContext()">getApplicationContext()</a> on any
+of your Activities.  Since your Activities may not live as long as the
+Twilio Client background <a href="http://developer.android.com/reference/android/app/Service.html">Service</a>, passing an <a href="http://developer.android.com/reference/android/app/Activity.html">Activity</a> context can cause a memory leak.</p>
+
+<h2 id="a-nameincominghow-do-i-handle-incoming-callsa"><a name="incoming">How do I handle Incoming calls?</a></h2>
+
+<p>Incoming calls are first detected by the Twilio Client service, which then hands them to your app to handle.  However, your application may be in the background and its Activities paused or killed, so the library needs a mechanism to ensure your app gets restarted properly and hand it the incoming call.  In fact, the same mechanism is used to notify your app about incoming calls when it's in the foreground.</p>
+
+<p>Your application needs to provide a <a href="http://developer.android.com/reference/android/app/PendingIntent.html">PendingIntent</a> to each Twilio Client <a href="javadoc/com/twilio/client/Device.html">Device</a> via <a href="javadoc/com/twilio/client/Device.html#setIncomingIntent(PendingIntent)">Device.setIncomingIntent()</a>.  This object wraps an <a href="http://developer.android.com/reference/android/content/Intent.html">Intent</a> that describes the type of
+Android component to be activated when an incoming call comes in.  This component could be an <a href="http://developer.android.com/reference/android/app/Activity.html">Activity</a>, <a href="http://developer.android.com/reference/android/app/Service.html">Service</a>, or <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html">BroadcastReceiver</a>.</p>
+
+<p>What you do when you receive this intent depends on which type of
+component you set in the Intent.  If you're using an Activity, you'll
+want to override <a href="http://developer.android.com/reference/android/app/Activity.html#onNewIntent(android.content.Intent)">Activity.onNewIntent()</a> and handle it there.  If you're
+using a Service, you'll want to override <a href="http://developer.android.com/reference/android/app/Service.html#onStartCommand(android.content.Intent,%20int,%20int)">Service.onStartCommand()</a>.  For a BroadcastReceiver, override <a href="http://developer.android.com/reference/android/content/BroadcastReceiver.html#onReceive(android.content.Context,%20android.content.Intent)">BroadcastReceiver.onReceive()</a>.</p>
+
+<p>When you receive the intent, you can retrieve the <a href="javadoc/com/twilio/client/Device.html">Device</a> and <a href="javadoc/com/twilio/client/Connection.html">Connection</a> for the incoming call using <a href="http://developer.android.com/reference/android/content/Intent.html#getParcelableExtra(java.lang.String)">Intent.getParcelableExtra()</a>
+with the <a href="javadoc/com/twilio/client/Device.html#EXTRA_DEVICE">Device.EXTRA_DEVICE</a> and <a href="javadoc/com/twilio/client/Device.html#EXTRA_CONNECTION">Device.EXTRA_CONNECTION</a> keys, respectively.</p>
+
+<p>The following code snippet illustrates one simple pattern in a single-activity application:</p>
+
+<pre class="brush: java">
+public class MyPhoneActivity extends Activity implements DeviceListener
+{
+    private Device device;
+
+    @Override
+    public void onCreate(Bundle bundle)
+    {
+        super.onCreate(bundle);
+        setContentView(R.layout.main);
+
+        /* Perform other app startup actions */
+
+        if (Twilio.isInitialized())
+        {
+            /* Twilio Client is already initialized, so just fetch
+             * the device list and see if it has any devices.  If
+             * not, recreate our device.
+             */
+
+            List&lt;Device&gt; devices = Twilio.listDevices();
+            if (devices.size() &gt; 0) {
+                device = devices.get(0);
+                device.setDeviceListener(this);
+            } else {
+                createDevice();
+            }
+        } 
+        else
+        {
+            /* Twilio Client is not initialized, so initialize it
+             * and create our first device.
+             */
+
+            Twilio.initialize(getApplicationContext(), new Twilio.InitListener()
+            {
+                @Override
+                public void onInitialized()
+                {
+                    createDevice();
+                }
+
+                @Override
+                public void onError(Exception error)
+                {
+                    /* Handle error */
+                }
+            }
+        }
+    }
+
+    private void createDevice()
+    {
+        String capabilityToken = fetchCapabilityToken();
+        device = Twilio.createDevice(capabilityToken, this);
+
+        Intent intent = new Intent(this, MyPhoneActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        device.setIncomingIntent(pendingIntent);
+    }
+
+    private String fetchCapabilityToken()
+    {
+        /* Fetch a capability token from your auth server.  In a
+         * real application you'll want to do this asynchronously
+         * to avoid blocking the UI.
+         */
+    }
+
+    @Override
+    public void onNewIntent(Intent intent)
+    {
+        super.onNewIntent(intent);
+        setIntent(intent);
+
+        /* Android guarantees that onNewIntent() is always called while
+         * the Activity is paused (even if it was previously running, the
+         * OS will pause it), so we can be sure that onResume() will be
+         * called soon.  Note that we cannot display any UI in this
+         * method, because the activity is currently paused.
+         */
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+
+        /* See if our Intent has an extra for the incoming connection.  If so,
+         * remove it from the Intent so we don't try to handle it again the
+         * next time we're resumed, and then go ahead and handle the new
+         * connection.
+         *
+         * This will work even if the previous instance of this Activity was
+         * destroyed, because Android will call onResume() right after calling
+         * onCreate().
+         */
+        Intent intent = getIntent();
+        Device device = intent.getParcelableExtra(Device.EXTRA_DEVICE);
+        Connection incoming = intent.getParcelableExtra(Device.EXTRA_CONNECTION);
+        if (incoming != null)
+        {
+            intent.removeExtra(Device.EXTRA_DEVICE);
+            intent.removeExtra(Device.EXTRA_CONNECTION);
+            handleIncomingConnection(device, incoming);
+        }
+    }
+
+    private void handleIncomingConnection(Device device, Connection incoming)
+    {
+        /* Do whatever you like here! */
+    }
+}
+</pre>
+
+<p>Note that in a more complex application, you'll probably want to keep your <a href="javadoc/com/twilio/client/Device.html">Device(s)</a> in a singleton object that is maintained out of a particular activity context.</p>
+
+<h2 id="a-namepermissionswhat-permissions-are-required-for-android-application-using-twilio-client-sdka"><a name="permissions">What permissions are required for Android application using Twilio Client SDK?</a></h2>
+
+<p>Any application using the Twilio Client SDK will need at least these
+permissions declared in <code>AndroidManifest.xml</code>:</p>
+
+<pre class="brush: xml">
+&lt;!-- needed to do anything on the network --&gt;
+&lt;uses-permission android:name="android.permission.INTERNET" /&gt;
+
+&lt;!-- needed to receive audio from the microphone when in a call --&gt;
+&lt;uses-permission android:name="android.permission.RECORD_AUDIO" /&gt;
+
+&lt;!-- needed to e.g. enable/disable the speakerphone on request --&gt;
+&lt;uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /&gt;
+
+&lt;!-- needed to monitor for when the network is available/unavailable
+     in order to refresh background connections --&gt;
+&lt;uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/&gt;
+&lt;uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/&gt;
+</pre>
+
+<h2 id="a-namethreadinghow-do-i-handle-multi-threadinga"><a name="threading">How do I Handle Multi-Threading?</a></h2>
+
+<p>Much of the work in Twilio Client for Android is performed in background
+threads.  This includes callbacks to listener objects.  If you need to perform
+any UI action in response to a listener callback (say, showing an alert when
+<a href="javadoc/com/twilio/client/DeviceListener.html#onStopListening(com.twilio.client.Device)">DeviceListener.onStopListening()</a> is called when an error occurs), you
+should make sure to perform these UI updates to the main thread.</p>
+
+<p>If you have a <a href="http://developer.android.com/reference/android/view/View.html">View</a> instance available, you can call <a href="http://developer.android.com/reference/android/view/View.html#post(java.lang.Runnable)">post()</a> on it, passing
+a <code>Runnable</code>, to push work onto the main UI thread.  If not, you can use a
+<a href="http://developer.android.com/reference/android/os/Handler.html">Handler</a> instance attached to the main UI thread, again using <a href="http://developer.android.com/reference/android/os/Handler.html#post(java.lang.Runnable)">post()</a> and a <code>Runnable</code>.</p>
+
+<p>For example:</p>
+
+<pre class="brush: java">
+public class MyAppActivity extends Activity implements DeviceListener
+{
+    /* ... other methods... */
+
+    private static final Handler = new Handler();
+
+    @Override
+    public void onStopListening(Device device, int errorCode, final String errorMessage)
+    {
+        handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                new AlertDialog.Builder(MyAppActivity.this)
+                    .setTitle("Connection Lost")
+                    .setMessage("Unable to receive incoming calls due to error: " + errorMessage)
+                    .setNeutralButton("Close", null)
+                    .create().show();
+            }
+        }
+    }
+}
+</pre>
+
+<p>The internal architecture of Twilio Client for Android makes use of an asychronous 
+queuing system to route the heavy-lifting of API calls onto a background thread 
+managed by the library.  This helps ensure that API calls made from the main thread 
+will not cause UI stuttering, and it also allows you to invoke the Twilio Client API 
+from any thread in your application.</p>
+
+<h2 id="a-namesoundshow-do-i-configure-soundsa"><a name="sounds">How do I Configure Sounds?</a></h2>
+
+<p>Twilio Client comes with optional audio files for various connection events including an outgoing connection sound, an incoming connection sound and a disconnected sound.  Note that you can replace these with your own sounds if you so desire.  At the time of this release, they must be 2-channel, 16-bit, 44.1kHz .wav files.</p>
+
+<p>If these resources are included in your project (see the 
+<a href="#building">Building Your App</a> section), they will be automatically 
+invoked by the Twilio Client library at the appropriate times during a connection's 
+life-cycle unless you have overridden the relevant sound setter on <a href="javadoc/com/twilio/client/Device.html">Device</a> 
+(<a href="javadoc/com/twilio/client/Device.html#setIncomingSoundEnabled(boolean)">Device.setIncomingSoundEnabled(boolean)</a>, <a href="javadoc/com/twilio/client/Device.html#setOutgoingSoundEnabled(boolean)">Device.setOutgoingSoundEnabled(boolean)</a>, and <a href="javadoc/com/twilio/client/Device.html#setDisconnectSoundEnabled(boolean)">Device.setDisconnectSoundEnabled(boolean)</a>).</p>
+
+<p>If no other connections are pending or in-progress, the incoming connection sound will 
+be played in a loop through the notification stream (see 
+<a href="http://developer.android.com/reference/android/media/AudioManager.html#STREAM_NOTIFICATION">AudioManager.STREAM_NOTIFICATION</a>).</p>
+
+<p>Once a connection is in-progress, the first of any additional incoming connections will 
+trigger the sound once through the notification stream.</p>
+
+<p>All other sounds will be played through the notification stream. For more information 
+about media playback, please visit the 
+<a href="http://developer.android.com/guide/topics/media/index.html">Android Multimedia Guide</a>.</p>
+
+<p>If you need more advanced control over playback of sounds, you may omit the sound resources, 
+disable the relevant properties on <a href="javadoc/com/twilio/client/Device.html">Device</a>, and manage playback with your own classes.</p>
+
+<h2 id="a-nameproguardwhat-is-the-recommended-proguard-directives-exclusions-when-running-the-twilio-client-for-androida"><a name="proguard">What is the recommended proguard directives (exclusions) when running the Twilio Client for Android?</a></h2>
+
+<p>Add the following directives if you are using proguard in your application.</p>
+
+<p><code>-keep class com.twilio.** { *; }</code></p>
+
+</div>
+
+<script type="text/javascript">
+    SyntaxHighlighter.defaults['auto-links'] = false;
+    SyntaxHighlighter.defaults['toolbar'] = false;
+    SyntaxHighlighter.defaults['gutter'] = false;
+    SyntaxHighlighter.config.space=' ';
+    SyntaxHighlighter.all();
+</script>
+
+</body>
+</html>

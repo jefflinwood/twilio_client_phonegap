@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Twilio Client iOS Quick Start</title>
+    <link rel="stylesheet" href="assets/docs-style.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shCore.css">
+    <link rel="stylesheet" href="assets/syntaxhighlighter/shThemeDefault.css">
+    <script type="text/javascript" src="assets/syntaxhighlighter/shCore.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushJava.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushObjC.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPhp.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushXml.js"></script>
+    <script type="text/javascript" src="assets/syntaxhighlighter/shBrushPython.js"></script>
+</head>
+<body>
+
+<div id="header">
+    <div id="header-logo">
+        <img src="assets/twilio-header-logo.png" alt="Twilio">
+    </div>
+</div>
+
+<div id="content">
+
+<h1 id="twilio-client-ios-quickstart">Twilio Client iOS Quickstart</h1>
+
+<h2 id="overview">Overview</h2>
+
+<p>You want your iPad/iPhone/iPod Touch app to make and receive calls?
+There's an SDK for that!</p>
+
+<p>Twilio Client for iOS is an Objective-C library that enables voice
+communications with landlines or other Twilio Client devices, including
+web browsers and other mobile devices.</p>
+
+<h2 id="architecture">Architecture</h2>
+
+<p>There are three major pieces in a Twilio Client app:</p>
+
+<ul>
+  <li>Your iOS app that uses the <code>libTwilioClient.a</code> library to add Voice over IP
+features to your application.</li>
+  <li>A server-side application to grant a <em>capability token</em> to your Client app,
+and to orchestrate Twilio's telephony services using
+<a href="http://www.twilio.com/docs/api/twiml/">TwiML</a> and Twilio's <a href="http://www.twilio.com/docs/api/rest/">REST API</a>. You'll use a <a href="https://www.twilio.com/user/account/apps/add">TwiML Application</a> to connect your iOS app to Twilio's cloud.</li>
+  <li>Twilio's cloud services to connect your app to conference calls, IVR applications, and make calls to PSTN and SIP devices.  </li>
+</ul>
+
+<p><img src="assets/twilio-ios-diagram.png" alt="" /></p>
+
+<p>We'll walk you through each of these pieces in detail below. Let's get started.</p>
+
+<h2 id="quickstart-tutorial">Quickstart Tutorial</h2>
+
+<p>In this tutorial, we'll use the Twilio Client iOS and TwiML APIs to demonstrate how to make
+an outgoing call, receive an incoming call, and make calls between two
+Twilio Client instances.</p>
+
+<p>This guide assumes you have familiarity with iOS and Objective-C
+concepts like View-Controllers, delegates, properties, and Objective-C
+object life cycle and memory management.</p>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ol>
+  <li>Install Xcode 6 with at least iOS SDK 8 or higher. Xcode may be
+obtained from the Mac App Store.</li>
+  <li>Get set up as a registered iOS developer with valid Provisioning
+Profile(s) for any devices you will be testing with. For more
+information on provisioning devices, please refer to Apple's
+documentation
+<a href="https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingProfiles/MaintainingProfiles.html">Maintaining Identifiers, Devices, and Profiles</a>.</li>
+  <li>Get a Twilio Account SID and Auth Token to initiate calls from your
+iOS device. You will find these in your
+<a href="https://www.twilio.com/user/account/">Account Dashboard</a>. If you
+don't have an account, you can always sign up for a free
+<a href="https://www.twilio.com/try-twilio">trial account</a>.</li>
+  <li>In the example below, we'll setup a web server on the public Internet to 
+host the server-side code for generating capability tokens and TwiML. 
+The Quickstart below provides a sample python app deployed to Heroku 
+for this purpose, but you can use whatever method for deploying a web 
+server you like.</li>
+</ol>
+
+<p>Let's get some of the server-side dependencies out of the way first.</p>
+
+<h2 id="configure-a-placeholder-twiml-application">Configure a Placeholder TwiML Application</h2>
+
+<p>Visit <a href="https://www.twilio.com/user/account/apps/add">TwiML Apps in the Twilio Account Portal</a> and click 'Create TwiML
+App'. Enter 'iOS Quickstart' as the app's Friendly Name and click 'Save'. Don't
+worry about the Voice and Messaging URLs yet–we'll fill them in shortly. </p>
+
+<p>Once the application is saved, make note of its ApplicationSid (a long string like "APa4983020a0b29fb5db1b1dc68e322fbe"). We'll need this in the upcoming steps.</p>
+
+<p><img src="assets/apps.png" alt="" /></p>
+
+<h2 id="setup-the-back-end-application-server">Setup the back-end Application Server</h2>
+
+<p>Next, we'll deploy a server to perform two functions:</p>
+
+<ol>
+  <li>Provide capability tokens to our iOS client application.</li>
+  <li>Serve up our TwiML application and/or make REST API calls to orchestrate 
+Twilio's telephony services.</li>
+</ol>
+
+<h3 id="quick-tour-of-the-application">Quick Tour of the Application</h3>
+
+<p>The code for the Quickstart Tutorial server-side application can be found in the <code>Server/</code> folder inside the SDK tarball. Feel free to open up <code>server.py</code> and take a look. The app uses Python's <a href="http://flask.pocoo.org">Flask framework</a> and exposes three endpoints:</p>
+
+<ul>
+  <li><code>/</code> generates TwiML to tell Twilio to play "Welcome to Twilio" whenever you place a call.</li>
+  <li><code>/call</code> generates TwiML to route calls to/from the PSTN and your iOS application.</li>
+  <li><code>/token</code> returns a capability token to your iOS application.</li>
+</ul>
+
+<h3 id="deploying-the-server">Deploying the Server</h3>
+
+<p>Now we need to make this application available via the public Internet.
+You can do this with either of the following methods, or another approach to
+deploy a web server you're comfortable with.</p>
+
+<h4 id="option-1-use-heroku">Option 1: Use Heroku</h4>
+
+<p>The easiest way to deploy the application is <a href="http://www.heroku.com">Heroku</a>. To do this, do the following:</p>
+
+<ol>
+  <li>Visit the <a href="https://github.com/twilio/mobile-quickstart">Twilio Mobile Quickstart repository on Github</a>
+and click the "Deploy to Heroku" button. If you don't have a Heroku account,
+you'll be led through the process to set one up.</li>
+  <li>Once you've signed into Heroku, you'll be taken to a form to deploy the
+Quickstart application.</li>
+  <li>Enter your Twilio Account Sid and your Twilio Auth Token as the
+ACCOUNT_SID and AUTH_TOKEN values, respectively.</li>
+  <li>Enter the TwiML App Sid you created above as the value
+for APP_SID.</li>
+  <li>Enter any caller ID that you've verified with your Twilio account in the
+CALLER_ID field.</li>
+  <li>Click Create your application.</li>
+  <li>Once Heroku finishes, open up a second tab and return to the <a href="https://www.twilio.com/user/account/apps/">configuration screen for your TwiML app</a>. Enter your Heroku application's URL as the voice url for your application and save the change.</li>
+</ol>
+
+<h4 id="option-2-run-locally-using-ngrok">Option 2: Run Locally Using ngrok</h4>
+
+<p>With this method, you'll run <code>Flask</code> on your local box and create a
+publicly-addressable tunnel to it using <a href="https://ngrok.com">ngrok</a>.</p>
+
+<ol>
+  <li>Open server.py and modify <code>ACCOUNT_SID</code> and <code>AUTH_TOKEN</code> to
+match the values from your Twilio account. </li>
+  <li>Modify <code>APP_SID</code> to match the App Sid you created above.</li>
+  <li>Modify <code>CALLER_ID</code> to any caller ID that you've verified with your Twilio account.</li>
+  <li>Install all the required python dependencies by running <code>pip install -r requirements.txt</code> from the <code>Server/</code> folder at the command line.</li>
+  <li>Download and install <a href="https://ngrok.com">ngrok</a> and setup a free ngrok
+account.</li>
+  <li>Run <code>python server.py</code> to start the server.</li>
+  <li>Run <code>ngrok 5000</code> to open up a tunnel from the public Internet to your server.</li>
+  <li>Return to the <a href="https://www.twilio.com/user/account/apps/">configuration screen for your TwiML app</a> and enter your ngrok application's URL as the voice URL for your application and save the change.</li>
+</ol>
+
+<h4 id="testing-your-server">Testing your Server</h4>
+
+<p>To make sure your server deployed successfully, open a web browser and enter <code>http://{your heroku app or ngrok address}/</code> and view source on the resulting page. If everything is working, you'll see some XML that looks like this:</p>
+
+<pre class="brush: xml">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+   &lt;Response&gt;
+     &lt;Say&gt;Welcome to Twilio&lt;/Say&gt;
+   &lt;/Response&gt;
+</pre>
+
+<p>This is a simple TwiML application that will play an announcement whenever you make a call from your iOS application.</p>
+
+<p>Now that we have the server-side dependencies setup, let's get started on our iOS app. You can test the examples below in the iOS Simulator or on your device.</p>
+
+<h2 id="the-xcode-project">The Xcode Project</h2>
+
+<p>Please open <code>HelloMonkey.xcodeproj</code> Xcode project in <code>Quickstart</code> folder. 
+This project is based on "View-based Application" template for
+iPhone that has already been configured to work with Twilio Client
+library. Please see <a href="faq.html">Frequently Asked Questions</a> for details on
+modifying an Xcode project to use Twilio Client.</p>
+
+<p>The HelloMonkey app is very simple, presenting "Dial" and "Hangup"
+buttons, and a text field for who the app should call. The user
+interface elements have already been wired up to the
+<code>HelloMonkeyViewController</code> class in Interface Builder.</p>
+
+<p>In this step, you'll fill in the code to give the app its behavior,
+learning how to use the Twilio Client iOS SDK in the process.</p>
+
+<h2 id="creating-a-device">Creating a Device</h2>
+
+<p>The primary class for connecting to Twilio services from your app is
+<code>TCDevice</code>. This class represents a soft "device" that knows how to speak to Twilio services, coordinates service authorization with Twilio,
+listens for incoming connections, and establishes outgoing connections.
+An instance of this class is created using a "capability token",
+described in the next section.</p>
+
+<p>You'll use a <code>TCDevice</code> to initiate outgoing calls and listen for incoming calls.
+Let's create an instance and wire it up!</p>
+
+<p>Add a member variable of type <code>TCDevice</code> to <code>HelloMonkeyViewController.m</code> like so:</p>
+
+<p><strong>HelloMonkeyViewController.m</strong></p>
+
+<pre class="brush: oc">
+#import "HelloMonkeyViewController.h"
+#import "TwilioClient.h"
+
+@interface HelloMonkeyViewController()
+{
+    TCDevice* _phone;
+    TCConnection* _connection;
+}
+@end
+</pre>
+
+<p>To initialize a device, you'll change the URL to point to your server's
+<code>/token</code> URL and pass the resulting string to
+<code>-initWithCapabilityToken:delegate:</code>. </p>
+
+<p><strong>Note: Make sure you swap in your back-end server's <code>/token</code> URL for the sample URL in <code>HelloMonkeyViewController</code>'s <code>viewDidLoad</code> method.</strong></p>
+
+<p><strong>HelloMonkeyViewController.m</strong></p>
+
+<pre class="brush: oc">
+- (void)viewDidLoad
+{
+    NSURL *url = [NSURL URLWithString:@"http://companyfoo.com/token"];
+    NSError *error = nil;
+    NSString *token = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&amp;error];
+    if (token == nil) {
+        NSLog(@"Error retrieving token: %@", [error localizedDescription]);
+    } else {
+        _phone = [[TCDevice alloc] initWithCapabilityToken:token delegate:nil];
+    }
+}
+</pre>
+
+<p>Making an HTTP request to the <code>/token</code> endpoint returns a
+capability token–a string that, when given to a <code>TCDevice</code> in your iOS app, 
+grants it capabilities such as making outgoing calls or allowing incoming calls.</p>
+
+<p>Capability tokens are an important part of Twilio Client, so let's take a moment to explain them. You use capability tokens to sign communications from your iOS app to Twilio. In a production application, these tokens are created by you on your server and allow you to specify what capabilities are going to be available to your app, such as whether it can receive incoming connections, make outgoing connections, etc. </p>
+
+<p><strong>For the security of your Twilio account, you should not embed a Capability Token or your Twilio Account's Auth Token in the app you submit to the App Store.</strong></p>
+
+<p>You can read more about capability tokens and their best practices <a href="https://www.twilio.com/docs/client/capability-tokens">here</a>.</p>
+
+<p>Tokens always have an expiration, which means all tokens have a limited lifetime to protect you from abuse. The token generated here is valid for one hour unless otherwise specified. To specify a different period of time, pass in the number of seconds as the <code>expires</code> parameter to <code>TwilioCapability.generate()</code> – for example, for a token that expires after 5 minutes, call <code>TwilioCapability.generate(expires = 300)</code>. The maximum allowed lifetime for a token is 24 hours.</p>
+
+<p>Now, back to coding! If you compile and run this code, you should see the following:</p>
+
+<p><img src="assets/ios-hello-monkey.png" alt="" /></p>
+
+<p>Now, we've got an app that can create outgoing connections and receive
+incoming connections.</p>
+
+<p>For the time being, we'll focus on making an outgoing connection. The
+connection will call a Twilio sample application that responds with a
+friendly greeting.</p>
+
+<h2 id="dialing-out">Dialing out</h2>
+
+<p>Let's add a method to <code>HelloMonkeyViewController</code> to initiate a connection. To make a connection, we call the <code>TCDevice</code>'s
+<code>-connect:(NSDictionary*)params delegate:(id&lt;TCConnectionDelegate&gt;)delegate</code>
+method. Just pass in <code>nil</code> parameters and a <code>nil</code> delegate for the moment;
+we'll do more with these arguments later.</p>
+
+<p><strong>HelloMonkeyViewController.m</strong> </p>
+
+<pre class="brush: oc">
+- (IBAction)dialButtonPressed:(id)sender
+{
+    _connection = [_phone connect:nil delegate:nil];
+}
+</pre>
+
+<p>Connections to Twilio, either incoming or outgoing, are represented by
+instances of the class <code>TCConnection</code>. In addition, status callbacks are provided to objects that implement the delegate protocols <code>TCDeviceDelegate</code> and <code>TCConnectionDelegate</code>.</p>
+
+<p>If you now compile the app and run it, you should be able to click the
+"Dial" button and hear the greeting. Awesome!</p>
+
+<p>Wouldn't it be nice if you could also hang up on a connection if you
+don't want to hear the whole thing?  Let's go do that now.</p>
+
+<h2 id="hanging-up-from-your-ios-device">Hanging up from your iOS Device</h2>
+
+<p>Congratulations on making your first audio connection from your iOS device to
+Twilio!</p>
+
+<p>You should have heard a welcome message but as you probably noticed, you
+had no way to close the connection as the Hangup button doesn't do
+anything. So, let's add some functionality to do that.</p>
+
+<p>Let us just add code in <code>HelloMonkeyViewController</code> to hangup ongoing connection.</p>
+
+<p><strong>HelloMonkeyViewController.m</strong></p>
+
+<pre class="brush: oc">
+- (IBAction)hangupButtonPressed:(id)sender
+{
+    [_connection disconnect];
+}
+</pre>
+
+<p>That's everything!  Go ahead and make another call. You can now press
+the hangup button at any time and your connection will close.</p>
+
+<h2 id="connecting-to-a-twiml-application">Connecting to a TwiML Application</h2>
+
+<p>Wondering what actually happens when you connect using your app, and why
+you keep hearing that same welcome message? The key to this mystery is
+in the Python server we deployed earlier. Let's take a look at that code:</p>
+
+<p><strong>server.py</strong></p>
+
+<pre class="brush: py">
+APP_SID = 'YOUR APP SID HERE'
+
+# some code ommitted here
+
+@app.route('/token')
+def token():
+  account_sid = os.environ.get("ACCOUNT_SID", ACCOUNT_SID)
+  auth_token = os.environ.get("AUTH_TOKEN", AUTH_TOKEN)
+  app_sid = os.environ.get("APP_SID", APP_SID)
+
+  capability = TwilioCapability(account_sid, auth_token)
+
+  # This allows outgoing connections to TwiML application
+  if request.values.get('allowOutgoing') != 'false':
+     capability.allow_client_outgoing(app_sid)
+
+  # This allows incoming connections to client (if specified)
+  client = request.values.get('client')
+  if client != None:
+    capability.allow_client_incoming(client)
+
+  # This returns a token to use with Twilio based on the account and capabilities defined above
+  return capability.generate()
+</pre>
+
+<p>This portion of the code is responsible for creating a capability token that tells your Twilio Device what actions it is allowed to perform. </p>
+
+<p>The two lines below tell your device to make outgoing connections to the App Sid <code>APa4983020a0b29fb5db1b1dc68e322fbe</code>.</p>
+
+<pre class="brush: py">
+APP_SID = 'APa4983020a0b29fb5db1b1dc68e322fbe'
+
+# ... some code omitted here ...
+
+capability.allow_client_outgoing(app_sid)
+</pre>
+
+<p>Applications are just references to
+TwiML URLs that are fetched when a connection is established from a
+device, a browser, or a phone. If you are not familiar with TwiML, we
+suggest you head over to <a href="http://www.twilio.com/docs/quickstart/twiml/">Twilio Markup Language Quickstart</a>.</p>
+
+<p>The string starting with 'AP' is an Application SID. You entered this Application Sid when you deployed the server in the steps above. That Application's Voice URL points to your server's <code>/</code> endpoint, which returns the TwiML to say "Welcome to Twilio".</p>
+
+<pre class="brush: xml">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+  &lt;Response&gt;
+    &lt;Say&gt;Welcome to Twilio&lt;/Say&gt;
+  &lt;/Response&gt;
+</pre>
+
+<p>We change the user's telephony experience by generating different TwiML. Let's continue with an example that let's us dial any phone number.</p>
+
+<h2 id="passing-parameters-to-your-application-to-make-a-voip-call">Passing Parameters to your Application to Make a VoIP Call</h2>
+
+<p>Now, let's make a Twilio Application that can actually do something
+useful by passing data from your iOS app to your TwiML script. Let's dial out to an arbitrary phone number. It'll be easy, all we need to do is:</p>
+
+<ol>
+  <li>Grab a phone number from a text field.</li>
+  <li>Pass that phone number along to <code>TCDevice</code>'s <code>-(void)connect:(NSDictionary*)parameters delegate: (id&lt;TCDeviceDelegate&gt;)delegate</code>  method. </li>
+  <li>Update your TwiML Application to point to the back-end endpoint that receives this input and dials the number entered by the user.</li>
+</ol>
+
+<p>Let's go do it!</p>
+
+<p>The text field in the app is wired up to the property <code>numberField</code> in
+<code>HelloMonkeyViewController</code>. We'll now add some code to pass this through
+to your script when creating the connection.</p>
+
+<p>In <code>HelloMonkeyViewController.m</code>, create a <code>NSDictionary*</code> with an object
+containing key <code>To</code> and value of the text field. Pass this dictionary to the
+<code>connect</code> method.</p>
+
+<p><strong>HelloMonkeyViewController.m</strong>   </p>
+
+<pre class="brush: oc">
+- (IBAction)dialButtonPressed:(id)sender
+{
+    NSDictionary *params = @{@"To": self.numberField.text};
+    _connection = [_phone connect:params delegate:nil];
+}
+</pre>
+
+<p>Now, let's change our TwiML Application to point to our app's <code>/call</code> endpoint. Go to the <a href="https://www.twilio.com/user/account/apps">TwiML apps page</a> in the account portal, change your application's Voice URL to point to your server's <code>/call</code> endpoint: <code>http://{your server url}/call</code>, and save your changes.</p>
+
+<p>Now, go ahead and compile your app for the iOS Simulator. Run it, enter
+another phone number in the box and hit dial. Your phone will ring
+and you can talk to yourself!  Huzzah!</p>
+
+<p>Here's how it works. When your application connects to Twilio, your TwiML App's Voice URL points to the <code>/call</code> endpoint on your python server, which runs the following code:</p>
+
+<p><strong>server.py</strong></p>
+
+<pre class="brush: py">
+@app.route('/call', methods=['GET', 'POST'])
+def call():
+  resp = twilio.twiml.Response()
+  from_value = request.values.get('From')
+  to = request.values.get('To')
+ 
+  if not (from_value and to):
+    return str(resp.say("Invalid request"))
+  
+  from_client = from_value.startswith('client')
+  caller_id = os.environ.get("CALLER_ID", CALLER_ID)
+  
+  if not from_client:
+    # PSTN -&gt; client
+    resp.dial(callerId=from_value).client(CLIENT)
+  elif to.startswith("client:"):
+    # client -&gt; client
+    resp.dial(callerId=from_value).client(to[7:])
+  else:
+    # client -&gt; PSTN
+    resp.dial(to, callerId=caller_id)
+    
+  return str(resp)
+</pre>
+
+<p>This code looks at the <code>From</code> parameter in the request from Twilio. If the connection is coming from your iOS application, it grabs the <code>To</code> parameter passed by your application and dials the number. </p>
+
+<p>Things work a bit differently if the call is coming from a PSTN phone number. Let's dig into that now: Now, it's time to get your app ringing.</p>
+
+<h2 id="receiving-incoming-calls">Receiving Incoming Calls</h2>
+
+<p>Now, that we know how to initiate connections from your app, it's time
+for your app to start receiving incoming connections!  By the end of
+this tutorial, you will be able to call in to your device using the iOS
+Simulator (or vice-versa). Hold on tight…</p>
+
+<p>To receive incoming connections, we'll do the following things:</p>
+
+<ol>
+  <li>Give the app client a name and "register" it with Twilio.  </li>
+  <li>Add callbacks to notify your app of incoming connections via
+delegate methods.</li>
+</ol>
+
+<p>Change your code to pass a client name to your application server when
+it starts up. (In a real app, you would pass a username/password
+combination from <code>UITextField</code>s, but we'll omit this for simplicity.)</p>
+
+<p><code>TCDevice</code> announces important events to an object that implements the
+<code>TCDeviceDelegate</code> protocol:</p>
+
+<p><code>-(void)deviceDidStartListeningForIncomingConnections:(TCDevice*)device</code>:
+ callback for when the device is successfully registered with Twilio.</p>
+
+<p><code>-(void)device:(TCDevice*)device didStopListeningForIncomingConnections:(NSError*)error</code>:
+callback for when the device is no longer listening for incoming
+  connections due to error or a call to <code>-[TCDevice unlisten]</code>.</p>
+
+<p><code>-(void)device:(TCDevice*)device didReceiveIncomingConnection:(TCConnection*)connection</code>:
+callback for when a client receives an incoming connection</p>
+
+<p>Please register the instance of <code>HelloMonkeyViewController</code> to be
+<code>TCDevice</code>'s delegate during <code>(id)viewDidLoad</code>:</p>
+
+<p><strong>HelloMonkeyViewController.m</strong>   </p>
+
+<pre class="brush: oc">
+@interface HelloMonkeyViewController() &lt;TCDeviceDelegate&gt;
+{
+    TCDevice* _phone;
+    TCConnection* _connection;
+}
+@end
+
+@implementation HelloMonkeyViewController
+
+- (void)viewDidLoad
+{
+    NSURL *url = [NSURL URLWithString:@"http://companyfoo.com/token?client=jenny"];
+    NSError *error = nil;
+    NSString *token = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&amp;error];
+    if (token == nil) {
+        NSLog(@"Error retrieving token: %@", [error localizedDescription]);
+    } else {
+        _phone = [[TCDevice alloc] initWithCapabilityToken:token delegate:self];
+    }
+}
+@end
+</pre>
+
+<p>Next, implement
+<code>-(void)device:(TCDevice*)device didReceiveIncomingConnection:(TCConnection*)connection</code>
+and have it accept the incoming connection when we get the callback.
+Note that we can only accept incoming connection when the device is not busy.</p>
+
+<p><strong>HelloMonkeyViewController.m</strong>   </p>
+
+<pre class="brush: oc">
+- (void)device:(TCDevice *)device didReceiveIncomingConnection:(TCConnection *)connection
+{
+    if (device.state == TCDeviceStateBusy) {
+        [connection reject];
+    } else {
+        _connection = [connection accept];
+    }
+}
+</pre>
+
+<p>For completeness, implement the remaining two delegate methods to print
+out various state transitions and any errors (note that
+<code>-device:didStopListeningForIncomingConnections:</code> is a required method for the
+delegate):</p>
+
+<p><strong>HelloMonkeyViewController.m</strong></p>
+
+<pre class="brush: oc">
+- (void)deviceDidStartListeningForIncomingConnections:(TCDevice*)device
+{
+    NSLog(@"Device: %@ deviceDidStartListeningForIncomingConnections", device);
+}
+
+- (void)device:(TCDevice*)device didStopListeningForIncomingConnections:(NSError*)error
+{
+    NSLog(@"Device: %@ didStopListeningForIncomingConnections: %@", device, error);
+}
+</pre>
+
+<p>If you compile and run the app, it's now ready to receive incoming
+calls!  Now we need to
+<a href="https://www.twilio.com/user/account/phone-numbers">provision a Twilio phone number</a>
+and configure the Voice URL to point to your application server: <code>http://{your app's url}/call</code>.</p>
+
+<p>Call your Twilio number and you should be connected to your device (or
+iOS Simulator, whichever you're running), which will automatically
+answer the call! Start talkin'.</p>
+
+<p>Ready to put it all together?</p>
+
+<h2 id="making-calls-inout-of-your-app">Making Calls in/out of your App</h2>
+
+<p>Time to put it all together… you've
+already initiated an outgoing connection and received an incoming
+connection. Now, let's call from one client to another!</p>
+
+<p>For this example, we'll make a call between the iOS Simulator and your
+device.</p>
+
+<p>To do this, we'll need to log in as two different users. We'll change
+the log in code to register as "tommy" for the app in the iOS Simulator,
+and "jenny" for the app on your iOS device.</p>
+
+<p>In <code>HelloMonkeyViewController.m</code>'s <code>-(void)viewDidLoad</code> method, add some 
+conditional-compilation code:</p>
+
+<p><strong>HelloMonkeyViewController.m</strong>   </p>
+
+<pre class="brush: oc">
+-(void)viewDidLoad
+{
+#if TARGET_IPHONE_SIMULATOR
+    NSString *name = @"tommy";
+#else
+    NSString *name = @"jenny";
+#endif
+
+    NSString *urlString = [NSString stringWithFormat:@"http://companyfoo.com/token?client=%@", name];
+    NSURL *url = [NSURL URLWithString:urlString];
+    NSError *error = nil;
+    NSString *token = [NSString stringWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&amp;error];
+    if (token == nil) {
+        NSLog(@"Error retrieving token: %@", [error localizedDescription]);
+    } else {
+        _phone = [[TCDevice alloc] initWithCapabilityToken:token delegate:self];
+    }
+}
+</pre>
+
+<p>The Python script has some  simple call routing rules: </p>
+
+<ul>
+  <li>If the call is coming from PSTN, the app tells to Twilio to dial Client <code>jenny</code>. </li>
+  <li>Otherwise, the application tells Twilio to dial whatever number is passed in the <code>To</code> parameter: If the <code>To</code> parameter is a PSTN number, it writes that out within the <a href="http://www.twilio.com/docs/api/twiml/number"><code>&lt;Number&gt;</code></a> noun (which then will call a regular phone). If the <code>To</code> parameter is another client name, as indicated by <code>client:</code> prefix, it writes out a <a href="http://www.twilio.com/docs/api/twiml/client"><code>&lt;Client&gt;</code></a> noun, which will try and connect to a named Twilio Client app (a browser or another mobile client).</li>
+</ul>
+
+<p>So now build, install, and run your app on both your iOS device and 
+iOS Simulator. Then have one of the platforms call the other (e.g. by
+typing "client:tommy" into the iOS device's app). Once the connection has been
+established you should be able to talk between your phone and your
+laptop! And of course, you can call regular phone numbers as we demonstrated above.</p>
+
+<h2 id="wrapping-up">Wrapping up</h2>
+
+<p>That's it for this Quickstart! If you want to learn more about the iOS
+library that we have been using throughout this document, then head over
+to the iOS API Reference Xcode DocSet included with the SDK. If you want to learn more about how to customize the telephony experience of your application, check out the <a href="https://www.twilio.com/docs/api/twiml">TwiML documentation</a>.</p>
+</div>
+
+<script type="text/javascript">
+    SyntaxHighlighter.defaults['auto-links'] = false;
+    SyntaxHighlighter.defaults['toolbar'] = false;
+    SyntaxHighlighter.defaults['gutter'] = false;
+    SyntaxHighlighter.config.space=' ';
+    SyntaxHighlighter.all();
+</script>
+
+</body>
+</html>

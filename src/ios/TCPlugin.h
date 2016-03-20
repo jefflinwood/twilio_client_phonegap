@@ -37,6 +37,8 @@
 -(void)rejectConnection:(CDVInvokedUrlCommand*)command;
 -(void)muteConnection:(CDVInvokedUrlCommand*)command;
 -(void)sendDigits:(CDVInvokedUrlCommand*)command;
+-(void)hasNotificationPermission:(CDVInvokedUrlCommand*)command;
+-(void)promptForNotificationPermission:(CDVInvokedUrlCommand*)command;
 -(void)showNotification:(CDVInvokedUrlCommand*)command;
 -(void)cancelNotification:(CDVInvokedUrlCommand*)command;
 -(void)setSpeaker:(CDVInvokedUrlCommand*)command;
